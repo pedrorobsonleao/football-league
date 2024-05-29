@@ -2,23 +2,32 @@ services:
 
   mongo:
     image: mongo:latest
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     restart: always
     # ports:
     #   - 27017:27017
     environment:
-      MONGO_INITDB_DATABASE: football
-      MONGO_INITDB_ROOT_USERNAME: pele
-      MONGO_INITDB_ROOT_PASSWORD: 3t3rn0
+      MONGO_INITDB_DATABASE: footballdb
+      MONGO_INITDB_ROOT_USERNAME: footballuser
+      MONGO_INITDB_ROOT_PASSWORD: footballpwd
 
   mongo-express:
     image: mongo-express
     restart: always
     ports:
       - 8081:8081
+    depends_on:
+      mongo:
+        condition: service_healthy
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: pele
-      ME_CONFIG_MONGODB_ADMINPASSWORD: 3t3rn0
-      ME_CONFIG_MONGODB_URL: mongodb://pele:3t3rn0@mongo:27017/football
+      ME_CONFIG_MONGODB_ADMINUSERNAME: footballuser
+      ME_CONFIG_MONGODB_ADMINPASSWORD: footballpwd
+      ME_CONFIG_MONGODB_URL: mongodb://footballuser:footballpwd@mongo:27017/
       ME_CONFIG_BASICAUTH: false
 
   app:
@@ -26,10 +35,8 @@ services:
       dockerfile: Dockerfile
       context: ./app
     restart: always
-    ports:
-      - 8080:80
-    environment:
-      MONGODB_URL: mongodb://pele:3t3rn0@mongo:27017/football
-      API_PORT: 80
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGODB_URL: mongodb://footballuser:footballpwd@mongo:27017/
