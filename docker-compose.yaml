@@ -34,7 +34,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./app
-    restart: always
+    # restart: always
     depends_on:
       mongo:
         condition: service_healthy
